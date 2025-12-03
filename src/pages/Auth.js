@@ -1,4 +1,7 @@
 import { useState } from "react";
+import api from "../api";
+
+
 
 function Auth() {
   const [mode, setMode] = useState("login"); // "login" or "register"
@@ -9,17 +12,41 @@ function Auth() {
     password: "",
     skills: "",
   });
+  const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(mode === "login" ? "Login" : "Register", form);
-    alert(`${mode === "login" ? "Login" : "Signup"} (mock). Backend later.`);
-  };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
+
+  const payload =
+    mode === "login"
+      ? {
+          email: form.email,
+          password: form.password,
+        }
+      : {
+          firstname: form.firstname,
+          lastname: form.lastname,
+          email: form.email,
+          password: form.password,
+          skills: form.skills,
+        };
+
+  const { data } = await api.post(endpoint, payload);
+
+  localStorage.setItem("cc_token", data.token);
+  localStorage.setItem("cc_user", JSON.stringify(data.user));
+
+  // optional: navigate("/dashboard");
+};
+
+ 
 
   return (
     <div className="max-w-md mx-auto">

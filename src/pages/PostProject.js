@@ -1,4 +1,5 @@
 import { useState } from "react";
+import api from "../api";
 
 function PostProject() {
   const [form, setForm] = useState({
@@ -7,25 +8,75 @@ function PostProject() {
     skills: "",
     status: "Open",
     thumbnail: "",
-    proposalUrl: "",
   });
+
+  // NEW — state for proposal PDF file
+  const [proposalFile, setProposalFile] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // later: send to backend with axios.post("/api/projects", form)
-    console.log("Project submitted:", form);
-    alert("Project created (mock). Backend will be wired later.");
+
+    // Get logged-in user from localStorage
+    const user = JSON.parse(localStorage.getItem("cc_user") || "{}");
+
+    if (!user._id) {
+      alert("You must be logged in to post a project!");
+      return;
+    }
+
+    // Use FormData for file upload
+    const fd = new FormData();
+    fd.append("title", form.title);
+    fd.append("description", form.description);
+    fd.append("skills", form.skills);
+    fd.append("status", form.status);
+    fd.append("thumbnail", form.thumbnail);
+    fd.append("creatorId", user._id);
+
+    if (proposalFile) {
+      fd.append("proposal", proposalFile); // Upload PDF
+    }
+
+    try {
+      const res = await api.post("/projects/with-file", fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
+
+      console.log(res.data);
+      alert("Project created successfully!");
+
+      // Clear form
+      setForm({
+        title: "",
+        description: "",
+        skills: "",
+        status: "Open",
+        thumbnail: "",
+      });
+      setProposalFile(null);
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create project");
+    }
   };
 
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Post a New Project</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 bg-gray-900 p-6 rounded-lg border border-gray-700">
+
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 bg-gray-900 p-6 rounded-lg border border-gray-700"
+      >
         <div>
           <label className="block text-sm font-medium mb-1">Project Title</label>
           <input
@@ -95,21 +146,17 @@ function PostProject() {
           </div>
         </div>
 
+        {/* NEW — PDF File Input */}
         <div>
           <label className="block text-sm font-medium mb-1">
-            Proposal / Blueprint PDF URL (temporary)
+            Upload Proposal (PDF)
           </label>
           <input
-            type="url"
-            name="proposalUrl"
-            value={form.proposalUrl}
-            onChange={handleChange}
-            placeholder="https://..."
-            className="w-full rounded-md bg-gray-800 border border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+            type="file"
+            accept="application/pdf"
+            onChange={(e) => setProposalFile(e.target.files[0])}
+            className="w-full rounded-md bg-gray-800 border border-gray-700 px-3 py-2"
           />
-          <p className="text-xs text-gray-400 mt-1">
-            Later this will be a real file upload connected to the backend.
-          </p>
         </div>
 
         <button

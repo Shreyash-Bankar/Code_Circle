@@ -1,15 +1,36 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
+import api from "../api";
 
 function ProjectDetails() {
   const { id } = useParams();
-  const [comment, setComment] = useState("");
-  const [resumeUrl, setResumeUrl] = useState("");
 
-  const handleApply = (e) => {
+  const [comment, setComment] = useState("");
+  const [resumeFile, setResumeFile] = useState(null); // ✅ Added
+
+  const handleApply = async (e) => {
     e.preventDefault();
-    console.log("Apply", { id, comment, resumeUrl });
-    alert("Application submitted (mock). Backend will be added later.");
+
+    const fd = new FormData();
+    fd.append("comment", comment);
+    if (resumeFile) fd.append("resume", resumeFile);
+
+    try {
+      await api.post(`/applications/${id}`, fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: "Bearer " + localStorage.getItem("token"), // 🔐 JWT
+        },
+      });
+
+      alert("Application submitted successfully!");
+      setComment("");
+      setResumeFile(null);
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to apply");
+    }
   };
 
   return (
@@ -49,10 +70,12 @@ function ProjectDetails() {
 
       <section>
         <h2 className="text-lg font-semibold mb-3">Apply to this project</h2>
+
         <form
           onSubmit={handleApply}
           className="space-y-4 bg-gray-900 p-4 rounded-lg border border-gray-800"
         >
+          {/* ---- Comment ---- */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Comment / Motivation
@@ -66,16 +89,17 @@ function ProjectDetails() {
             />
           </div>
 
+          {/* ---- Resume Upload ---- */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Resume PDF URL (temporary)
+              Upload Resume (PDF)
             </label>
+
             <input
-              type="url"
-              value={resumeUrl}
-              onChange={(e) => setResumeUrl(e.target.value)}
-              className="w-full rounded-md bg-gray-800 border border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"
-              placeholder="https://..."
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setResumeFile(e.target.files[0])}
+              className="w-full text-sm text-gray-200"
             />
           </div>
 

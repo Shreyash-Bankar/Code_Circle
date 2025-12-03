@@ -1,32 +1,37 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-
-const MOCK_CREATED = [
-  {
-    _id: "1",
-    title: "Open Source Bug Tracker",
-    status: "Open",
-    applicationsCount: 3,
-  },
-  {
-    _id: "3",
-    title: "Realtime Chat App",
-    status: "In Progress",
-    applicationsCount: 5,
-  },
-];
-
-const MOCK_APPLIED = [
-  {
-    _id: "2",
-    title: "DSA Practice Platform",
-    status: "In Progress",
-  },
-];
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../api";
 
 function Dashboard() {
-  const [created] = useState(MOCK_CREATED);
-  const [applied] = useState(MOCK_APPLIED);
+  const navigate = useNavigate();
+
+  const [created, setCreated] = useState([]);
+  const [applied, setApplied] = useState([]);
+
+  // 🔐 Load user’s created + applied projects
+  useEffect(() => {
+    const token = localStorage.getItem("cc_token");
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+
+    const load = async () => {
+      try {
+        const [createdRes, appliedRes] = await Promise.all([
+          api.get("/users/me/projects"),
+          api.get("/users/me/applications"),
+        ]);
+
+        setCreated(createdRes.data);
+        setApplied(appliedRes.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    load();
+  }, [navigate]);
 
   return (
     <div className="space-y-8">
@@ -37,6 +42,7 @@ function Dashboard() {
         </p>
       </header>
 
+      {/* ----------------- Created Projects ----------------- */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Your Created Projects</h2>
@@ -84,8 +90,10 @@ function Dashboard() {
         )}
       </section>
 
+      {/* ----------------- Applied Projects ----------------- */}
       <section>
         <h2 className="text-lg font-semibold mb-3">Projects You Applied To</h2>
+
         {applied.length === 0 ? (
           <p className="text-sm text-gray-500">
             You have not applied to any projects yet.
