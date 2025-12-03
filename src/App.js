@@ -1,23 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import FindProjects from "./pages/FindProjects";
+import ProjectDetails from "./pages/ProjectDetails";
+import Dashboard from "./pages/Dashboard";
+import Auth from "./pages/Auth";
+import PostProject from "./pages/PostProject";
+import NotFound from "./pages/NotFound";
 
-function App() {
+function App() { 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="min-h-screen bg-gray-950 text-gray-100">
+      <Navbar />
+      <main className="max-w-6xl mx-auto px-4 py-6">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/find-projects" element={<FindProjects />} />
+          <Route path="/projects/:id" element={<ProjectDetails />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/post-project" element={<PostProject />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
     </div>
   );
 }
